@@ -1,7 +1,7 @@
 <template>
   <div class="hero_section">
-    <img src="@/assets/undraw_questions_re_1fy7 1.svg" alt="">
     <h1>make your own <span>Question Layer</span></h1>
+    <img src="@/assets/undraw_questions_re_1fy7 1.svg" alt="">
   </div>
 </template>
 
@@ -13,7 +13,7 @@ export default {
 
 <style>
 .hero_section {
-    margin-top: 50px;
+    padding: 50px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
