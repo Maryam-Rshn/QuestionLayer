@@ -1,6 +1,6 @@
 <template>
   <div class="question_container">
-    <div class="form_container">
+    <div v-if="!isFinished" class="form_container">
         <div class="question_title">
             <h2>write your first question</h2>
             <input type="text" v-model="question.title">
@@ -17,22 +17,11 @@
             <div class="answers">
                 <input type="text" v-model="answer">
                 <button @click="addAnswerChoices()" :disabled="!answer">{{ isEditting ? 'Save' : 'Add' }}</button>
-                <div class="answerChoices_container" v-if="question.answer_type === 'radio' ">
+                <div class="answerChoices_container">
                     <div class="answerChoices" v-for="(answer, index) in question.answers" :key="index">
                         <div>
-                            <input name="answer" type="radio" :value="answer">
-                            <label>{{ answer }}</label>
-                        </div>
-                        <div class="action_buttons">
-                            <button @click="askToDeleteAnswer(index)">Delete</button>
-                            <button @click="askToEditAnswer(index)">Edit</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="answerChoices_container" v-if="question.answer_type === 'checkbox' ">
-                    <div class="answerChoices" v-for="(answer, index) in question.answers" :key="index">
-                        <div>
-                            <input name="answer" type="checkbox" :value="answer">
+                            <input v-if="question.answer_type === 'radio' " name="answer" type="radio" :value="answer">
+                            <input v-if="question.answer_type === 'checkbox' " name="answer" type="checkbox" :value="answer">
                             <label>{{ answer }}</label>
                         </div>
                         <div class="action_buttons">
@@ -43,8 +32,24 @@
                 </div>
             </div>
         </div>
-        <button class="save_question" @click="saveQuestion" :disabled="!question.title || !question.answer_type">Save Question</button>
+        <div class="previous_answer" v-if="questions.length && questions[questions.length - 1].answer_type === 'radio'">
+            <h2>Choose an answer from previous question</h2>
+            <div>
+                <select name="selectedAnswer" v-model="selectedAnswer" >
+                    <option v-for="answer in questions[questions.length - 1].answers" :key="answer" :value="answer">{{ answer }}</option>
+                </select>
+                <button @click="submitAnswer()">Submit</button>
+            </div>
+        </div>
+        <div class="save_finish_buttons">
+            <button class="save_question" @click="saveQuestion" :disabled="!isSavingAllowed">Save Question</button>
+            <button class="askToFinish" @click="isFinished = !isFinished" :disabled="questions.length < 1">Finish</button>
+        </div>
     </div>
+    <div v-if="isFinished" class="finish">
+        <h1>Your questions are successfully added !</h1>
+    </div>
+    {{ questions }}
   </div>
 </template>
 
@@ -57,6 +62,8 @@ export default {
             isSavingActive: false,
             isEditting: false,
             index: null,
+            isFinished: false,
+            selectedAnswer: '',
             
             answerTypes: [
                 {id: 1, type: 'radio', label: 'Radio Button'},
@@ -67,7 +74,8 @@ export default {
                 id: 1,
                 title: '',
                 answer_type: '',
-                answers: []
+                answers: [],
+                previousAnswer: ''
             },
             questions: [],
         }
@@ -80,6 +88,23 @@ export default {
                 return true
             }
         },
+        isSavingAllowed() {
+            if(this.question.title && this.question.answer_type) {
+                if( this.question.answer_type !== "text") {
+                    if(this.question.answers.length < 2) {
+                        return false
+                    } else {
+                        return true
+                    }
+                }
+                else {
+                    return true
+                } 
+            } 
+            else {
+                return false
+            }
+        }
     },
     methods: {
         addAnswerChoices() {
@@ -96,7 +121,7 @@ export default {
         },
         saveQuestion() {
             this.questions.push({...this.question})
-            console.log(this.questions, 'this is questions');
+            console.log(this.questions, 'this is final questions');
             this.question.id += 1
             this.question.title = ''
             this.question.answer_type = ''
@@ -110,6 +135,10 @@ export default {
         },
         askToDeleteAnswer(index) {
             this.question.answers.splice(index,1)
+        },
+        submitAnswer() {
+            this.question.previousAnswer = this.selectedAnswer
+            this.selectedAnswer = ''
         }
     },
     mounted() {
@@ -226,6 +255,27 @@ h2 {
         color: #A5C9CA;
     }
 }
+.askToFinish {
+    height: 40px;
+    margin-top: 80px;
+    border: 2px solid #A5C9CA;
+    background-color: #A5C9CA;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 0 20px;
+    // width: 100px;
+    color: #E7F6F2;
+    cursor: pointer;
+    &:disabled {
+        background-color: #E7F6F2;
+        color: #A5C9CA;
+    }
+}
+.save_finish_buttons{
+    display: flex;
+    gap: 15px;
+}
 .answerChoices_container {
     margin-top: 30px;
 }
@@ -259,6 +309,44 @@ h2 {
     gap: 8px;
 }
 
+.finish {
+    h1{
+        font-size: 25px;
+        color: #395B64;
+
+    }
+}
+.previous_answer{
+    div {
+        display: flex;
+        justify-content: space-between;
+    }
+    select {
+        width: 400px;
+        height: 40px;
+        font-size: 18px;
+        padding: 0 15px;
+        margin-left: 20px;
+        border: 2px solid #A5C9CA;
+        border-radius: 8px;
+        color: #2C3333;
+    }
+    button {
+        height: 40px;
+        border: 2px solid #A5C9CA;
+        background-color: #A5C9CA;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 700;
+        // width: 50px;
+        color: #E7F6F2;
+        cursor: pointer;
+        &:disabled {
+            background-color: #E7F6F2;
+            color: #A5C9CA;
+        }
+    }
+}
 // .result {
 //     width: 50%;
 //     height: 100%;
