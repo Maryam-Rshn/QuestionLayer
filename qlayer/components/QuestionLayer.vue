@@ -2,7 +2,7 @@
   <div class="question_container">
     <div v-if="!isFinished" class="form_container">
         <div class="question_title">
-            <h2>write your first question</h2>
+            <h2>write the title of question {{ question.id }}</h2>
             <input type="text" v-model="question.title">
         </div>
         <div class="answer_types">
@@ -32,24 +32,26 @@
                 </div>
             </div>
         </div>
-        <div class="previous_answer" v-if="questions.length && questions[questions.length - 1].answer_type === 'radio'">
+        <div class="previous_answer" v-if="isAnswerRadio">
             <h2>Choose an answer from previous question</h2>
             <div>
                 <select name="selectedAnswer" v-model="selectedAnswer" >
-                    <option v-for="answer in questions[questions.length - 1].answers" :key="answer" :value="answer">{{ answer }}</option>
+                    <option v-for="answer in answerScenarios" :key="answer" :value="answer">{{ answer }}</option>
                 </select>
                 <button @click="submitAnswer()">Submit</button>
             </div>
         </div>
         <div class="save_finish_buttons">
             <button class="save_question" @click="saveQuestion" :disabled="!isSavingAllowed">Save Question</button>
-            <button class="askToFinish" @click="isFinished = !isFinished" :disabled="questions.length < 1">Finish</button>
+            <button class="askToFinish" @click="isFinished = !isFinished" :disabled="questionLayers.length < 1">Finish</button>
         </div>
     </div>
     <div v-if="isFinished" class="finish">
         <h1>Your questions are successfully added !</h1>
     </div>
-    {{ questions }}
+    layer {{ layer }} <br><br>
+    question layer{{ questionLayers }} <br><br>
+    answer scenario{{ answerScenarios }}
   </div>
 </template>
 
@@ -63,7 +65,9 @@ export default {
             isEditting: false,
             index: null,
             isFinished: false,
+            isAnswerRadio: false,
             selectedAnswer: '',
+            answerScenarios: [],
             
             answerTypes: [
                 {id: 1, type: 'radio', label: 'Radio Button'},
@@ -75,9 +79,10 @@ export default {
                 title: '',
                 answer_type: '',
                 answers: [],
-                previousAnswer: ''
+                askedBase: ''
             },
-            questions: [],
+            layer:[],
+            questionLayers: [],
         }
     },
     computed: {
@@ -119,13 +124,53 @@ export default {
                 }
             }
         },
-        saveQuestion() {
-            this.questions.push({...this.question})
-            console.log(this.questions, 'this is final questions');
+        askToEmptyQuestion() {
             this.question.id += 1
             this.question.title = ''
             this.question.answer_type = ''
             this.question.answers = []
+        },
+        saveQuestion() {
+            if(this.questionLayers.length < 1) {
+                if(this.question.answer_type === 'radio') {
+                    this.isAnswerRadio = true
+                    this.answerScenarios = [...this.question.answers]
+                }
+                this.layer.push({...this.question})
+                this.questionLayers.push(this.layer)
+                this.layer = []
+                this.askToEmptyQuestion()
+            }
+            else {
+                if(this.isAnswerRadio) {
+                    this.layer.push({...this.question})
+                    this.askToEmptyQuestion()
+                    if(this.answerScenarios.length < 1) {
+                        this.questionLayers.push(this.layer)
+                        this.layer= []
+                        this.isAnswerRadio = false
+                        this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
+                            if(layer.answer_type === 'radio') {
+                                this.isAnswerRadio = true
+                                this.answerScenarios = [...layer.answers]
+                            }
+                        })
+                    }
+                }
+                else {
+                    this.layer.push({...this.question})
+                    this.askToEmptyQuestion()
+                    this.questionLayers.push(this.layer)
+                    this.layer= []
+                    this.isAnswerRadio = false
+                    this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
+                        if(layer.answer_type === 'radio') {
+                            this.isAnswerRadio = true
+                            this.answerScenarios = [...layer.answers]
+                        }
+                    })
+                }
+            }
         },
         askToEditAnswer(index) {
             this.isEditting = true
@@ -137,9 +182,19 @@ export default {
             this.question.answers.splice(index,1)
         },
         submitAnswer() {
-            this.question.previousAnswer = this.selectedAnswer
+            this.question.askedBase = this.selectedAnswer
+            this.answerScenarios.splice(this.answerScenarios.indexOf(this.selectedAnswer), 1)
             this.selectedAnswer = ''
-        }
+        },
+        handleQuestionLayers() {
+            if(!this.questionLayers) {
+                this.questionLayers.push(this.layer)
+                this.layer = []
+            }
+            else if(this.questionLayers.length === 1) {
+                
+            }
+        },
     },
     mounted() {
         console.log(this.selectedType, 'this is selected type');
