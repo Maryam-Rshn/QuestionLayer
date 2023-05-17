@@ -185,16 +185,7 @@ export default {
             this.question.askedBase = this.selectedAnswer
             this.answerScenarios.splice(this.answerScenarios.indexOf(this.selectedAnswer), 1)
             this.selectedAnswer = ''
-        },
-        handleQuestionLayers() {
-            if(!this.questionLayers) {
-                this.questionLayers.push(this.layer)
-                this.layer = []
-            }
-            else if(this.questionLayers.length === 1) {
-                
-            }
-        },
+        }
     },
     mounted() {
         console.log(this.selectedType, 'this is selected type');
@@ -302,7 +293,6 @@ h2 {
     font-size: 20px;
     font-weight: 700;
     padding: 0 20px;
-    // width: 100px;
     color: #E7F6F2;
     cursor: pointer;
     &:disabled {
@@ -319,7 +309,6 @@ h2 {
     font-size: 20px;
     font-weight: 700;
     padding: 0 20px;
-    // width: 100px;
     color: #E7F6F2;
     cursor: pointer;
     &:disabled {
@@ -349,7 +338,6 @@ h2 {
     }
     label {
         font-size: 20px;
-        // font-weight: 700;
     }
     button {
         height: 30px;
@@ -393,7 +381,6 @@ h2 {
         border-radius: 8px;
         font-size: 15px;
         font-weight: 700;
-        // width: 50px;
         color: #E7F6F2;
         cursor: pointer;
         &:disabled {
@@ -402,10 +389,5 @@ h2 {
         }
     }
 }
-// .result {
-//     width: 50%;
-//     height: 100%;
-//     background-color: #E7F6F2;
-// }
 
 </style>
