@@ -35,10 +35,10 @@
         <div class="previous_answer" v-if="isAnswerRadio">
             <h2>Choose an answer from previous question</h2>
             <div>
-                <select name="selectedAnswer" v-model="selectedAnswer" >
-                    <option v-for="answer in answerScenarios" :key="answer" :value="answer">{{ answer }}</option>
+                <select v-for="(question, index) in answerScenarios" :key="index" name="selectedAnswer" v-model="selectedAnswer" @change="submitAnswer(index)">
+                    <option disabled value="">title of question: {{ question.title }}</option>
+                    <option v-for="answer in question.answers" :key="answer" :value="answer">{{ answer }}</option>
                 </select>
-                <button @click="submitAnswer()">Submit</button>
             </div>
         </div>
         <div class="previous_answer" v-if="notRadioScenarios.length > 0">
@@ -60,9 +60,7 @@
     </div>
     layer {{ layer }} <br><br>
     question layer{{ questionLayers }} <br><br>
-    answer scenario{{ answerScenarios }} <br><br>
-    handleNotRadioScenarios {{ handleNotRadioScenarios }} <br><br>
-    notRadioScenarios {{ notRadioScenarios }}
+    answer scenario{{ answerScenarios }} 
   </div>
 </template>
 
@@ -160,7 +158,7 @@ export default {
             if(this.questionLayers.length < 1) {
                 if(this.question.answer_type === 'radio') {
                     this.isAnswerRadio = true
-                    this.answerScenarios = [...this.question.answers]
+                    this.answerScenarios = [{title: this.question.title, answers: [...this.question.answers]}]
                 }
                 this.layer.push({...this.question})
                 this.questionLayers.push(this.layer)
@@ -181,7 +179,7 @@ export default {
                         this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
                             if(layer.answer_type === 'radio') {
                                 this.isAnswerRadio = true
-                                this.answerScenarios = [...layer.answers]
+                                this.answerScenarios.push({title: layer.title, answers: [...layer.answers]})
                             }
                         })
                     }
@@ -193,10 +191,10 @@ export default {
                         this.questionLayers.push(this.layer)
                         this.layer= []
                         this.isAnswerRadio = false
-                        this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
+                        this.questionLayers[this.questionLayers.length - 1].filter((layer)=> {
                             if(layer.answer_type === 'radio') {
                                 this.isAnswerRadio = true
-                                this.answerScenarios = [...layer.answers]
+                                this.answerScenarios.push(layer)
                             }
                         })
                     }
@@ -212,9 +210,12 @@ export default {
         askToDeleteAnswer(index) {
             this.question.answers.splice(index,1)
         },
-        submitAnswer() {
+        submitAnswer(index) {
             this.question.askedBase = this.selectedAnswer
-            this.answerScenarios.splice(this.answerScenarios.indexOf(this.selectedAnswer), 1)
+            this.answerScenarios[index].answers.splice(this.answerScenarios.indexOf(this.selectedAnswer), 1)
+            if(this.answerScenarios[index].answers.length === 0) {
+                this.answerScenarios.splice(index, 1)
+            }
             this.selectedAnswer = ''
         },
         submitNotRadioAnswer() {
