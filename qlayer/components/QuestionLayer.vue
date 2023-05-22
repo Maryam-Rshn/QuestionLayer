@@ -41,6 +41,15 @@
                 <button @click="submitAnswer()">Submit</button>
             </div>
         </div>
+        <div class="previous_answer" v-if="notRadioScenarios.length > 0">
+            <h2>Choose a question from previous layer</h2>
+            <div>
+                <select name="selectedAnswer" v-model="selectedAnswer" >
+                    <option v-for="answer in notRadioScenarios" :key="answer" :value="answer">{{ answer }}</option>
+                </select>
+                <button @click="submitNotRadioAnswer()">Submit</button>
+            </div>
+        </div>
         <div class="save_finish_buttons">
             <button class="save_question" @click="saveQuestion" :disabled="!isSavingAllowed">Save Question</button>
             <button class="askToFinish" @click="isFinished = !isFinished" :disabled="questionLayers.length < 1">Finish</button>
@@ -51,7 +60,9 @@
     </div>
     layer {{ layer }} <br><br>
     question layer{{ questionLayers }} <br><br>
-    answer scenario{{ answerScenarios }}
+    answer scenario{{ answerScenarios }} <br><br>
+    handleNotRadioScenarios {{ handleNotRadioScenarios }} <br><br>
+    notRadioScenarios {{ notRadioScenarios }}
   </div>
 </template>
 
@@ -67,7 +78,9 @@ export default {
             isFinished: false,
             isAnswerRadio: false,
             selectedAnswer: '',
+            selectedRadioAnswer: {question: '', answer: ''},
             answerScenarios: [],
+            notRadioScenarios: [],
             
             answerTypes: [
                 {id: 1, type: 'radio', label: 'Radio Button'},
@@ -79,7 +92,8 @@ export default {
                 title: '',
                 answer_type: '',
                 answers: [],
-                askedBase: ''
+                askedBase: '',
+                askedBaseRadio: []
             },
             layer:[],
             questionLayers: [],
@@ -109,7 +123,19 @@ export default {
             else {
                 return false
             }
-        }
+        },
+        handleNotRadioScenarios() {
+            if(this.questionLayers.length > 1) {
+                const index = this.questionLayers.length - 1
+                const test = []
+                this.questionLayers[index].filter((layer) => {
+                    if(layer.answer_type !== 'radio') {
+                        test.push(layer.title)
+                    }
+                })
+                return test
+            }
+        },
     },
     methods: {
         addAnswerChoices() {
@@ -149,6 +175,9 @@ export default {
                         this.questionLayers.push(this.layer)
                         this.layer= []
                         this.isAnswerRadio = false
+                        if(this.handleNotRadioScenarios.length > 0) {
+                            this.notRadioScenarios = [...this.handleNotRadioScenarios]
+                        }
                         this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
                             if(layer.answer_type === 'radio') {
                                 this.isAnswerRadio = true
@@ -160,15 +189,17 @@ export default {
                 else {
                     this.layer.push({...this.question})
                     this.askToEmptyQuestion()
-                    this.questionLayers.push(this.layer)
-                    this.layer= []
-                    this.isAnswerRadio = false
-                    this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
-                        if(layer.answer_type === 'radio') {
-                            this.isAnswerRadio = true
-                            this.answerScenarios = [...layer.answers]
-                        }
-                    })
+                    if(this.notRadioScenarios.length < 1) {
+                        this.questionLayers.push(this.layer)
+                        this.layer= []
+                        this.isAnswerRadio = false
+                        this.questionLayers[this.questionLayers.length - 1].map((layer)=> {
+                            if(layer.answer_type === 'radio') {
+                                this.isAnswerRadio = true
+                                this.answerScenarios = [...layer.answers]
+                            }
+                        })
+                    }
                 }
             }
         },
@@ -184,6 +215,11 @@ export default {
         submitAnswer() {
             this.question.askedBase = this.selectedAnswer
             this.answerScenarios.splice(this.answerScenarios.indexOf(this.selectedAnswer), 1)
+            this.selectedAnswer = ''
+        },
+        submitNotRadioAnswer() {
+            this.question.askedBase = this.selectedAnswer
+            this.notRadioScenarios.splice(this.notRadioScenarios.indexOf(this.selectedAnswer), 1)
             this.selectedAnswer = ''
         }
     },
